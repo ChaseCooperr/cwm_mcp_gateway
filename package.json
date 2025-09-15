@@ -1,0 +1,32 @@
+{
+  "name": "OpenAI MCP Gateway Server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "cwm-api-gateway-mcp": "./bin/cwm-api-gateway-mcp"
+  },
+  "scripts": {
+    "start": ".venv/bin/python api_gateway_server.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasondsmith72/CWM-API-Gateway-MCP.git"
+  },
+  "keywords": [
+    "connectwise",
+    "api",
+    "gateway",
+    "claude",
+    "mcp",
+    "model",
+    "context",
+    "protocol"
+  ],
+  "dependencies": {
+    "cross-spawn": "^7.0.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cwm-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - cwm-network
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cwm-api-gateway
+    environment:
+      # ConnectWise API Configuration
+      CONNECTWISE_API_URL: ${CONNECTWISE_API_URL}
+      CONNECTWISE_COMPANY_ID: ${CONNECTWISE_COMPANY_ID}
+      CONNECTWISE_PUBLIC_KEY: ${CONNECTWISE_PUBLIC_KEY}
+      CONNECTWISE_PRIVATE_KEY: ${CONNECTWISE_PRIVATE_KEY}
+      CONNECTWISE_AUTH_PREFIX: ${CONNECTWISE_AUTH_PREFIX:-}
+
+      # Cached Queries Database Components
+      CACHED_QUERIES_DB_HOST: postgres
+      CACHED_QUERIES_DB_PORT: 5432
+      CACHED_QUERIES_DB_NAME: cached_queries
+      CACHED_QUERIES_DB_USER: ${POSTGRES_USER:-postgres}
+      CACHED_QUERIES_DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+
+      # API Database Components
+      API_DB_HOST: postgres
+      API_DB_PORT: 5432
+      API_DB_NAME: connectwise_api
+      API_DB_USER: ${POSTGRES_USER:-postgres}
+      API_DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+
+      # System Database URL (for fallback)
+      SYSTEN_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/postgres
+    volumes:
+      - ./manage.json:/app/manage.json:ro
+      - ./logs:/app/logs
+    networks:
+      - cwm-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  cwm-network:
+    driver: bridge

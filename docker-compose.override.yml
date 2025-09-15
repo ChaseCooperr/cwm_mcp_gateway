@@ -1,0 +1,51 @@
+# Docker Compose Override for Development
+# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
+# Use this for development-specific configurations
+
+version: '3.8'
+
+services:
+  api-gateway:
+    # Enable hot-reloading by mounting source code
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment from mounting
+      - /app/__pycache__  # Exclude Python cache
+
+    # Override environment for development
+    environment:
+      DEBUG: "true"
+      LOG_LEVEL: "DEBUG"
+
+    # Keep container running even if main process exits (for debugging)
+    restart: "no"
+
+    # Add development ports if needed
+    ports:
+      - "8000:8000"  # For potential future web interface
+
+    # Override command for development (uncomment if needed)
+    # command: ["python", "-u", "api_gateway_server.py"]
+
+  postgres:
+    # Expose PostgreSQL port for direct database access during development
+    ports:
+      - "5432:5432"
+
+    # Add development environment variables
+    environment:
+      POSTGRES_DB: postgres
+      # Enable detailed logging for development
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+
+    # Mount additional development scripts if needed
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d
+      # Uncomment to add development SQL scripts
+      # - ./docker/postgres/dev:/docker-entrypoint-initdb.d/dev
+
+# Development-specific volumes
+volumes:
+  postgres_data:
+    driver: local
